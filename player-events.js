@@ -1,7 +1,7 @@
 'use strict';
 
 const sprintf = require('sprintf-js').sprintf;
-const LevelUtil = require('../ranvier-lib/lib/LevelUtil');
+const LevelUtil = require('../bundle-example-lib/lib/LevelUtil');
 const { Broadcast, Config, Logger } = require('ranvier');
 
 module.exports = {

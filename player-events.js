@@ -22,12 +22,12 @@ module.exports = {
       const timeSinceLastCommand = Date.now() - lastCommandTime;
       const maxIdleTime = (Math.abs(Config.get('maxIdleTime')) * 60000) || Infinity;
 
-      if (timeSinceLastCommand > maxIdleTime) {
+      if (timeSinceLastCommand > maxIdleTime && !this.isInCombat()) {
         this.save(() => {
           Broadcast.sayAt(this, `You were kicked for being idle for more than ${maxIdleTime / 60000} minutes!`);
           Broadcast.sayAtExcept(this.room, `${this.name} disappears.`, this);
           Logger.log(`Kicked ${this.name} for being idle.`);
-          this.socket.emit('close');
+          state.PlayerManager.removePlayer(this, true);
         });
       }
     },

@@ -6,6 +6,13 @@ const { Broadcast, Config, Logger } = require('ranvier');
 
 module.exports = {
   listeners: {
+    save: state => async function (callback) {
+      await state.PlayerManager.save(this);
+      if (typeof callback === 'function') {
+        callback();
+      }
+    },
+
     commandQueued: state => function (commandIndex) {
       const command = this.commandQueue.queue[commandIndex];
       const ttr = sprintf('%.1f', this.commandQueue.getTimeTilRun(commandIndex));

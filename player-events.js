@@ -13,6 +13,10 @@ module.exports = {
     move: state => function (movementCommand) {
       const { roomExit } = movementCommand;
 
+      if (!roomExit) {
+        return B.sayAt(this, "You can't go that way!");
+      }
+
       if (this.isInCombat()) {
         return B.sayAt(this, 'You are in the middle of a fight!');
       }

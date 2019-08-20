@@ -7,6 +7,32 @@ const { Broadcast: B, Config, Logger } = require('ranvier');
 module.exports = {
   listeners: {
     /**
+     * Player entered the game in a room that doesn't exist. Most likely case
+     * was that they were in an instanced area when they quit and the instance
+     * no longer exists
+     */
+    unknownRoom: state => function (roomId) {
+      // This basic handler will try to create a new area instance for the player
+      // if they logged out in an instance, otherwise leave them in limbo and error
+      // to the server
+      const areaName = state.AreaFactory.getNameByEntityReference(roomId);
+      if (!state.AreaFactory.isInstanced(areaName)) {
+        Logger.error(`Player ${this.name} loaded into an invalid room [${roomId}]`);
+        return;
+      }
+
+      const instanceId = this.name;
+      if (!state.AreaManager.getArea(areaName, instanceId)) {
+        state.AreaFactory.createInstance(state, areaName, instanceId);
+      }
+
+      // empty out value so moveTo doesn't try to trigger playerLeave on bad room
+      this.room = null;
+      const room = state.RoomManager.getRoom(roomId, instanceId);
+      this.moveTo(room);
+    },
+
+    /**
      * Handle a player movement command. From: 'commands' input event.
      * movementCommand is a result of CommandParser.parse
      */
@@ -21,7 +47,11 @@ module.exports = {
         return B.sayAt(this, 'You are in the middle of a fight!');
       }
 
-      const nextRoom = state.RoomManager.getRoom(roomExit.roomId);
+      const nextRoom = getRoom(state, this, roomExit.roomId);
+      if (!nextRoom) {
+        return B.sayAt(this, "You can't go that way! (Instance not created)");
+      }
+
       const oldRoom = this.room;
 
       const door = oldRoom.getDoor(nextRoom) || nextRoom.getDoor(oldRoom);
@@ -121,3 +151,24 @@ module.exports = {
     },
   }
 };
+
+function getRoom(state, player, nextRoomId) {
+  const nextAreaName = state.AreaFactory.getNameByEntityReference(nextRoomId);
+  let nextRoom = null;
+  if (state.AreaFactory.isInstanced(nextAreaName)) {
+    const instanceId = player.name;
+    B.sayAt(player, `Entering instanced area: ${nextAreaName}`);
+
+    if (!state.AreaManager.getArea(nextAreaName, instanceId)) {
+      B.sayAt(player, `No instance exists, creating...`);
+      state.AreaFactory.createInstance(state, nextAreaName, instanceId);
+      B.sayAt(player, `done.`);
+    }
+
+    nextRoom = state.RoomManager.getRoom(nextRoomId, instanceId);
+  } else {
+    nextRoom = state.RoomManager.getRoom(nextRoomId);
+  }
+
+  return nextRoom;
+}

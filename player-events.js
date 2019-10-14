@@ -157,12 +157,14 @@ function getRoom(state, player, nextRoomId) {
   let nextRoom = null;
   if (state.AreaFactory.isInstanced(nextAreaName)) {
     const instanceId = player.name;
-    B.sayAt(player, `Entering instanced area: ${nextAreaName}`);
+    if (player.area != nextAreaName ){
+      B.sayAt(player, `Entering instanced area: ${nextAreaName}`);
 
-    if (!state.AreaManager.getArea(nextAreaName, instanceId)) {
-      B.sayAt(player, `No instance exists, creating...`);
-      state.AreaFactory.createInstance(state, nextAreaName, instanceId);
-      B.sayAt(player, `done.`);
+      if (!state.AreaManager.getArea(nextAreaName, instanceId)) {
+        B.sayAt(player, `No instance exists, creating...`);
+        state.AreaFactory.createInstance(state, nextAreaName, instanceId);
+        B.sayAt(player, `done.`);
+      }
     }
 
     nextRoom = state.RoomManager.getRoom(nextRoomId, instanceId);
